@@ -27,7 +27,12 @@ FetchContent_MakeAvailable(raylib)
 # -------------------------
 add_executable(MallMerge 
     src/main.c
-    # Add future .c files here (e.g., src/board.c, src/economy.c)
+    src/game_state.c
+    src/item.c
+    src/drag.c
+    src/generator.c
+    src/input.c
+    src/render.c
 )
 
 # -------------------------
