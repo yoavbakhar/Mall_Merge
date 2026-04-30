@@ -3,6 +3,7 @@
 #include "generator.h"
 #include "render.h"
 #include "task.h"
+#include <stdio.h>
 
 void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     *state = (GameState){0};
@@ -43,6 +44,18 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     /* Initialize task system */
     state->skeleton_key_task = CreateSkeletonKeyExchangeTask();
     state->task_panel_visible = 1;  /* Task panel visible by default */
+    
+    /* Initialize second task: Mannequin -> Final reward */
+    state->mannequin_task = (Task){
+        .required_item_id = ITEM_ID_DESIGNERS_MANNEQUIN,
+        .reward_item_id = ITEM_ID_EMPTY,  /* No physical reward, just completion */
+        .is_available = 0,  /* Not available until boutique is unlocked */
+        .description = "Restore the Boutique by trading the Designer's Mannequin"
+    };
+    
+    /* Initialize progression flags */
+    state->boutiqueUnlocked = 0;
+    state->boutiqueRestored = 0;
 }
 
 Texture2D *GetItemTexture(GameState *state, ItemID item_id) {
@@ -84,4 +97,32 @@ void GameStateCleanup(GameState *state) {
             UnloadTexture(state->texture_cache[i].texture);
         }
     }
+}
+
+/* Save game state to binary file */
+int SaveGameState(GameState *state, const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    if (!file) {
+        return 0;  /* Failed to open file */
+    }
+    
+    /* Write the entire GameState struct to file */
+    size_t written = fwrite(state, sizeof(GameState), 1, file);
+    fclose(file);
+    
+    return (written == 1) ? 1 : 0;
+}
+
+/* Load game state from binary file */
+int LoadGameState(GameState *state, const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) {
+        return 0;  /* Failed to open file (no save exists) */
+    }
+    
+    /* Read the entire GameState struct from file */
+    size_t read = fread(state, sizeof(GameState), 1, file);
+    fclose(file);
+    
+    return (read == 1) ? 1 : 0;
 }

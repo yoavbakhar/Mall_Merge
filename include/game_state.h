@@ -63,7 +63,12 @@ typedef struct {
     
     /* Task system */
     Task skeleton_key_task;
+    Task mannequin_task;  /* Second task: Mannequin -> Final reward */
     int task_panel_visible;  /* 1 if task panel is visible, 0 if collapsed */
+    
+    /* Game progression flags */
+    int boutiqueUnlocked;   /* 1 if boutique chain is unlocked (after Skeleton Key task) */
+    int boutiqueRestored;   /* 1 if boutique is fully restored (after Mannequin task) */
 } GameState;
 
 /* Initialize game state */
@@ -74,5 +79,11 @@ Texture2D *GetItemTexture(GameState *state, ItemID item_id);
 
 /* Cleanup all loaded textures */
 void GameStateCleanup(GameState *state);
+
+/* Save game state to binary file */
+int SaveGameState(GameState *state, const char *filename);
+
+/* Load game state from binary file */
+int LoadGameState(GameState *state, const char *filename);
 
 #endif

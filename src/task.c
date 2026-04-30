@@ -28,6 +28,17 @@ TaskOutcome ExecuteTask(Task *task, GameState *state) {
                 /* Mark task as completed */
                 task->is_available = 0;
                 
+                /* Handle progression flags based on which task was completed */
+                if (task->required_item_id == ITEM_ID_SKELETON_KEY) {
+                    /* Skeleton Key task completed - unlock boutique */
+                    state->boutiqueUnlocked = 1;
+                    /* Enable the mannequin task */
+                    state->mannequin_task.is_available = 1;
+                } else if (task->required_item_id == ITEM_ID_DESIGNERS_MANNEQUIN) {
+                    /* Mannequin task completed - boutique is restored */
+                    state->boutiqueRestored = 1;
+                }
+                
                 return TASK_OUTCOME_SUCCESS;
             }
         }
