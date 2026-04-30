@@ -2,6 +2,11 @@
 #include "drag.h"
 #include "generator.h"
 #include "item.h"
+#include "task.h"
+
+/* Task button dimensions (must match render.c) */
+#define TASK_BTN_WIDTH 200
+#define TASK_BTN_HEIGHT 40
 
 void GetSlotAtPosition(Vector2 pos, Vector2 gridTopLeft, float slotSize,
                        int *out_row, int *out_col) {
@@ -50,7 +55,7 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
             state->tap_timer < TAP_THRESHOLD) {
             if (state->dragged_item.is_generator) {
                 /* Tap on generator: activate it and restore generator to slot */
-                if (ActivateGenerator(state)) {
+                if (ActivateGenerator(state, state->dragged_item.item_id)) {
                     /* Success: restore generator */
                     state->grid[state->tap_row][state->tap_col].item = state->dragged_item;
                 } else {
@@ -70,5 +75,23 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
         state->tap_row = -1;
         state->tap_col = -1;
         state->tap_timer = 0.0f;
+    }
+    
+    /* Check for task button click or toggle button click */
+    if (state->skeleton_key_task.is_available && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        Vector2 mousePos = GetMousePosition();
+        
+        /* Check if toggle button was clicked */
+        if (CheckToggleButtonClick(mousePos, screenWidth, screenHeight)) {
+            state->task_panel_visible = !state->task_panel_visible;
+        }
+        /* Check if complete task button was clicked (only if panel is visible) */
+        else if (CheckTaskButtonClick(state, mousePos, screenWidth, screenHeight)) {
+            /* Execute the task */
+            TaskOutcome outcome = ExecuteTask(&state->skeleton_key_task, state);
+            
+            /* Outcome is handled - task is now completed if successful */
+            /* The ExecuteTask function already updates the grid and marks task as completed */
+        }
     }
 }

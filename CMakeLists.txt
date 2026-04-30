@@ -29,10 +29,12 @@ add_executable(MallMerge
     src/main.c
     src/game_state.c
     src/item.c
+    src/items.c
     src/drag.c
     src/generator.c
     src/input.c
     src/render.c
+    src/task.c
 )
 
 # -------------------------

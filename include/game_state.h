@@ -3,12 +3,36 @@
 
 #include "raylib.h"
 #include "item.h"
+#include "items.h"
 #include "constants.h"
 
-typedef struct {
+/* Task outcome flags */
+typedef enum {
+    TASK_OUTCOME_SUCCESS = 1,
+    TASK_OUTCOME_ITEM_NOT_FOUND = 0,
+    TASK_OUTCOME_ALREADY_COMPLETED = -1
+} TaskOutcome;
+
+/* Task definition */
+typedef struct Task {
+    ItemID required_item_id;
+    ItemID reward_item_id;
+    int is_available;
+    const char *description;
+} Task;
+
+typedef struct GameState {
     Item item;
     Rectangle bounds;  /* Screen position & size of this slot */
 } Slot;
+
+/* Texture cache entry */
+typedef struct {
+    ItemID item_id;
+    Texture2D texture;
+} TextureCacheEntry;
+
+#define TEXTURE_CACHE_SIZE 20
 
 typedef struct {
     /* Grid state */
@@ -33,11 +57,22 @@ typedef struct {
     float generator_cooldown;
     float generator_cooldown_max;
     
-    /* Assets */
-    Texture2D generator_texture;  /* Texture for generator item */
+    /* Texture cache */
+    TextureCacheEntry texture_cache[TEXTURE_CACHE_SIZE];
+    int texture_cache_count;
+    
+    /* Task system */
+    Task skeleton_key_task;
+    int task_panel_visible;  /* 1 if task panel is visible, 0 if collapsed */
 } GameState;
 
 /* Initialize game state */
 void GameStateInit(GameState *state, int screenWidth, int screenHeight);
+
+/* Get texture for an item (load on demand) */
+Texture2D *GetItemTexture(GameState *state, ItemID item_id);
+
+/* Cleanup all loaded textures */
+void GameStateCleanup(GameState *state);
 
 #endif

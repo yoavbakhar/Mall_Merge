@@ -1,13 +1,14 @@
 #include "generator.h"
 #include "item.h"
+#include "items.h"
 
-int SpawnItem(GameState *state, int type) {
+int SpawnItem(GameState *state, ItemID item_id) {
     for (int r = 0; r < GRID_ROWS; r++) {
         for (int c = 0; c < GRID_COLS; c++) {
             if (ItemIsEmpty(&state->grid[r][c].item)) {
-                state->grid[r][c].item.type = type;
-                state->grid[r][c].item.level = 1;
-                state->grid[r][c].item.is_generator = (type == ITEM_TYPE_GENERATOR);
+                state->grid[r][c].item.item_id = item_id;
+                const ItemDefinition *def = GetItemDefinition(item_id);
+                state->grid[r][c].item.is_generator = def->is_generator;
                 return 1;
             }
         }
@@ -15,7 +16,7 @@ int SpawnItem(GameState *state, int type) {
     return 0;  /* No empty slots */
 }
 
-int ActivateGenerator(GameState *state) {
+int ActivateGenerator(GameState *state, ItemID generator_id) {
     /* Check cooldown */
     if (state->generator_cooldown > 0.0f) {
         return 0;
@@ -26,11 +27,23 @@ int ActivateGenerator(GameState *state) {
         return 0;
     }
     
+    /* Get generator definition to find its chain */
+    const ItemDefinition *gen_def = GetItemDefinition(generator_id);
+    if (!gen_def || !gen_def->is_generator) {
+        return 0;
+    }
+    
+    /* Get level 1 item from this generator's chain */
+    ItemID spawn_item = GetChainLevel1Item(gen_def->chain_id);
+    if (spawn_item == ITEM_ID_EMPTY) {
+        return 0;
+    }
+    
     /* Deduct energy */
     state->energy -= GENERATOR_SPAWN_COST;
     
-    /* Spawn normal item */
-    if (!SpawnItem(state, ITEM_TYPE_NORMAL)) {
+    /* Spawn the level 1 item */
+    if (!SpawnItem(state, spawn_item)) {
         /* Grid full; refund energy */
         state->energy += GENERATOR_SPAWN_COST;
         return 0;

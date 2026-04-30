@@ -1,5 +1,6 @@
 #include "drag.h"
 #include "item.h"
+#include "items.h"
 
 void StartDrag(GameState *state, int row, int col) {
     if (ItemIsEmpty(&state->grid[row][col].item)) {
@@ -12,7 +13,7 @@ void StartDrag(GameState *state, int row, int col) {
     state->dragged_item = state->grid[row][col].item;
     
     /* Clear origin slot */
-    state->grid[row][col].item.type = 0;
+    state->grid[row][col].item.item_id = ITEM_ID_EMPTY;
 }
 
 void EndDrag(GameState *state, int target_row, int target_col,
@@ -38,13 +39,22 @@ void EndDrag(GameState *state, int target_row, int target_col,
     }
     
     /* Target slot has an item */
-    if (target->item.type == state->dragged_item.type && 
-        target->item.level == state->dragged_item.level) {
-        /* Same type & level: MERGE! */
-        target->item.level++;
-        return;
+    if (target->item.item_id == state->dragged_item.item_id) {
+        /* Same item ID: check if we can merge */
+        ItemID next_id = GetNextItemInChain(target->item.item_id);
+        if (next_id != ITEM_ID_EMPTY) {
+            /* Successfully merge: target becomes next level in chain */
+            target->item.item_id = next_id;
+            
+            /* Update is_generator flag if necessary */
+            const ItemDefinition *def = GetItemDefinition(next_id);
+            if (def) {
+                target->item.is_generator = def->is_generator;
+            }
+            return;
+        }
     }
     
-    /* Different type or level: snap back to origin */
+    /* Different item or cannot merge: snap back to origin */
     state->grid[state->drag_from_row][state->drag_from_col].item = state->dragged_item;
 }
