@@ -32,4 +32,10 @@ int CheckTaskButtonClick(GameState *state, Vector2 mousePos, int screenWidth, in
 /* Check if the toggle button was clicked */
 int CheckToggleButtonClick(Vector2 mousePos, int screenWidth, int screenHeight);
 
+/* Check if the trash button was clicked */
+int CheckTrashButtonClick(GameState *state, Vector2 mousePos, int screenWidth, int screenHeight);
+
+/* Delete the currently selected item (if not a generator) */
+int DeleteSelectedItem(GameState *state);
+
 #endif

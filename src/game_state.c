@@ -37,9 +37,9 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     state->grid[0][0].item.is_generator = 1;
     
     /* Spawn test items from Chain A */
-    SpawnItem(state, ITEM_ID_FADED_RECEIPT);
-    SpawnItem(state, ITEM_ID_FADED_RECEIPT);
-    SpawnItem(state, ITEM_ID_FADED_RECEIPT);
+    SpawnItem(state, ITEM_ID_FADED_RECEIPT, -1, -1);
+    SpawnItem(state, ITEM_ID_FADED_RECEIPT, -1, -1);
+    SpawnItem(state, ITEM_ID_FADED_RECEIPT, -1, -1);
     
     /* Initialize task system */
     state->skeleton_key_task = CreateSkeletonKeyExchangeTask();

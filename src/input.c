@@ -3,6 +3,7 @@
 #include "generator.h"
 #include "item.h"
 #include "task.h"
+#include "render.h"
 
 /* Task button dimensions (must match render.c) */
 #define TASK_BTN_WIDTH 200
@@ -32,6 +33,31 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         int row = -1, col = -1;
         GetSlotAtPosition(mousePos, gridTopLeft, slotSize, &row, &col);
+        
+        /* Check for task panel UI clicks (outside grid) */
+        if (row < 0 && col < 0) {
+            if (state->skeleton_key_task.is_available) {
+                /* Check toggle button */
+                if (CheckToggleButtonClick(mousePos, screenWidth, screenHeight)) {
+                    state->task_panel_visible = !state->task_panel_visible;
+                    return;
+                }
+                /* Check complete task button */
+                if (CheckTaskButtonClick(state, mousePos, screenWidth, screenHeight)) {
+                    TaskOutcome outcome = ExecuteTask(&state->skeleton_key_task, state);
+                    SaveGameState(state, "save.dat");
+                    return;
+                }
+            }
+            /* Check for trash button click (outside grid) */
+            if (CheckTrashButtonClick(state, mousePos, screenWidth, screenHeight)) {
+                DeleteSelectedItem(state);
+                SaveGameState(state, "save.dat");
+                return;
+            }
+        }
+        
+        /* Handle grid clicks - start drag */
         if (row >= 0 && col >= 0) {
             state->tap_row = row;
             state->tap_col = col;
@@ -55,7 +81,7 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
             state->tap_timer < TAP_THRESHOLD) {
             if (state->dragged_item.is_generator) {
                 /* Tap on generator: activate it and restore generator to slot */
-                if (ActivateGenerator(state, state->dragged_item.item_id)) {
+                if (ActivateGenerator(state, state->dragged_item.item_id, state->tap_row, state->tap_col)) {
                     /* Success: restore generator */
                     state->grid[state->tap_row][state->tap_col].item = state->dragged_item;
                 } else {
@@ -64,34 +90,29 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
                 }
                 state->dragging = 0;
             } else {
-                /* Normal item: do normal drag-drop */
-                EndDrag(state, row, col, gridTopLeft, slotSize);
+                /* Quick tap on regular item: SELECT IT (don't delete!) */
+                /* Restore item back to slot first (clear for drag was done in StartDrag) */
+                state->grid[state->tap_row][state->tap_col].item = state->dragged_item;
+                
+                /* Toggle selection state */
+                if (state->selected_row == state->tap_row && state->selected_col == state->tap_col) {
+                    /* Already selected - deselect it */
+                    state->selected_row = -1;
+                    state->selected_col = -1;
+                } else {
+                    /* Select this slot */
+                    state->selected_row = state->tap_row;
+                    state->selected_col = state->tap_col;
+                }
+                state->dragging = 0;
             }
         } else if (state->dragging) {
-            /* Either moved or held too long: do normal drag-drop */
+            /* Either moved or held too long: do normal drag-drop (merge) */
             EndDrag(state, row, col, gridTopLeft, slotSize);
         }
         
         state->tap_row = -1;
         state->tap_col = -1;
         state->tap_timer = 0.0f;
-    }
-    
-    /* Check for task button click or toggle button click */
-    if (state->skeleton_key_task.is_available && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        Vector2 mousePos = GetMousePosition();
-        
-        /* Check if toggle button was clicked */
-        if (CheckToggleButtonClick(mousePos, screenWidth, screenHeight)) {
-            state->task_panel_visible = !state->task_panel_visible;
-        }
-        /* Check if complete task button was clicked (only if panel is visible) */
-        else if (CheckTaskButtonClick(state, mousePos, screenWidth, screenHeight)) {
-            /* Execute the task */
-            TaskOutcome outcome = ExecuteTask(&state->skeleton_key_task, state);
-            
-            /* Outcome is handled - task is now completed if successful */
-            /* The ExecuteTask function already updates the grid and marks task as completed */
-        }
     }
 }

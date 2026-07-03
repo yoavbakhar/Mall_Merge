@@ -213,6 +213,105 @@ void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int scre
     DrawText(btnText, panelX + (TASK_PANEL_WIDTH - 20 - btnTextWidth) / 2, completeBtnY + 8, 12, WHITE);
 }
 
+/* Trash button dimensions */
+#define TRASH_BTN_WIDTH 40
+#define TRASH_BTN_HEIGHT 40
+
+/* Check if the trash button was clicked */
+int CheckTrashButtonClick(GameState *state, Vector2 mousePos, int screenWidth, int screenHeight) {
+    if (state->selected_row < 0 || state->selected_col < 0) {
+        return 0;  /* No selection */
+    }
+    
+    /* Get the selected item */
+    Slot *selected = &state->grid[state->selected_row][state->selected_col];
+    if (ItemIsEmpty(&selected->item)) {
+        return 0;  /* Empty slot selected */
+    }
+    
+    /* Don't allow deleting generators */
+    if (selected->item.is_generator) {
+        return 0;  /* Generators cannot be deleted */
+    }
+    
+    int panelX = screenWidth - TASK_PANEL_WIDTH;
+    int trashBtnY = screenHeight - 120;
+    
+    Rectangle trashBtnRect = (Rectangle){
+        (float)(panelX + (TASK_PANEL_WIDTH - TRASH_BTN_WIDTH) / 2),
+        (float)trashBtnY,
+        (float)TRASH_BTN_WIDTH,
+        (float)TRASH_BTN_HEIGHT
+    };
+    
+    if (mousePos.x >= trashBtnRect.x && mousePos.x <= trashBtnRect.x + TRASH_BTN_WIDTH &&
+        mousePos.y >= trashBtnRect.y && mousePos.y <= trashBtnRect.y + TRASH_BTN_HEIGHT) {
+        return 1;
+    }
+    return 0;
+}
+
+/* Delete the currently selected item (if not a generator) */
+int DeleteSelectedItem(GameState *state) {
+    if (state->selected_row < 0 || state->selected_col < 0) {
+        return 0;  /* No selection */
+    }
+    
+    Slot *selected = &state->grid[state->selected_row][state->selected_col];
+    if (ItemIsEmpty(&selected->item)) {
+        return 0;  /* Empty slot selected */
+    }
+    
+    /* Don't allow deleting generators */
+    if (selected->item.is_generator) {
+        return 0;  /* Generators cannot be deleted */
+    }
+    
+    /* Clear the slot */
+    selected->item.item_id = ITEM_ID_EMPTY;
+    selected->item.is_generator = 0;
+    
+    /* Clear selection */
+    state->selected_row = -1;
+    state->selected_col = -1;
+    
+    return 1;
+}
+
+/* Draw the trash button in the task panel */
+void DrawTrashButton(GameState *state, int screenWidth, int screenHeight) {
+    int panelX = screenWidth - TASK_PANEL_WIDTH;
+    int trashBtnY = screenHeight - 120;
+    
+    Rectangle trashBtnRect = (Rectangle){
+        (float)(panelX + (TASK_PANEL_WIDTH - TRASH_BTN_WIDTH) / 2),
+        (float)trashBtnY,
+        (float)TRASH_BTN_WIDTH,
+        (float)TRASH_BTN_HEIGHT
+    };
+    
+    /* Check if there's a valid deletable item selected */
+    int canDelete = 0;
+    if (state->selected_row >= 0 && state->selected_col >= 0) {
+        Slot *selected = &state->grid[state->selected_row][state->selected_col];
+        if (!ItemIsEmpty(&selected->item) && !selected->item.is_generator) {
+            canDelete = 1;
+        }
+    }
+    
+    /* Draw button background - red if can delete, gray if not */
+    Color btnColor = canDelete ? (Color){ 139, 34, 34, 255 } : (Color){ 80, 80, 80, 150 };
+    DrawRectangleRec(trashBtnRect, btnColor);
+    DrawRectangleLinesEx(trashBtnRect, 2.0f, canDelete ? RED : DARKGRAY);
+    
+    /* Draw trash icon */
+    const char *trashIcon = "🗑";
+    int iconWidth = MeasureText(trashIcon, 18);
+    DrawText(trashIcon, 
+             (int)(trashBtnRect.x + (TRASH_BTN_WIDTH - iconWidth) / 2),
+             (int)(trashBtnRect.y + 8), 18, WHITE);
+}
+
 /* Draw the toggle button at the bottom of the screen */
 void DrawToggleButton(int screenWidth, int screenHeight, int isVisible) {
     int btnX = (screenWidth - TOGGLE_BTN_WIDTH) / 2;
@@ -266,9 +365,19 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
             for (int c = 0; c < GRID_COLS; c++) {
                 Slot *slot = &state->grid[r][c];
                 
-                /* Draw slot background */
-                DrawRectangleRec(slot->bounds, (Color){60, 60, 70, 255});
-                DrawRectangleLinesEx(slot->bounds, 2.0f, (Color){100, 100, 120, 255});
+                /* Highlight selected slot */
+                if (r == state->selected_row && c == state->selected_col) {
+                    DrawRectangleRec(slot->bounds, (Color){80, 120, 180, 255});
+                } else {
+                    DrawRectangleRec(slot->bounds, (Color){60, 60, 70, 255});
+                }
+                
+                /* Draw border - highlight gold if selected */
+                if (r == state->selected_row && c == state->selected_col) {
+                    DrawRectangleLinesEx(slot->bounds, 3.0f, YELLOW);
+                } else {
+                    DrawRectangleLinesEx(slot->bounds, 2.0f, (Color){100, 100, 120, 255});
+                }
                 
                 /* Draw item if present and not being dragged */
                 if (!ItemIsEmpty(&slot->item)) {
@@ -347,6 +456,9 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
         /* Draw task panel on the right side */
         Vector2 mousePos = GetMousePosition();
         DrawTaskPanel(state, mousePos, screenWidth, screenHeight);
+        
+        /* Draw trash button in task panel */
+        DrawTrashButton(state, screenWidth, screenHeight);
         
         /* Draw toggle button at the bottom */
         if (state->skeleton_key_task.is_available) {

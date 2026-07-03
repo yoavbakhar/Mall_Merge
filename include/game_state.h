@@ -66,6 +66,10 @@ typedef struct {
     Task mannequin_task;  /* Second task: Mannequin -> Final reward */
     int task_panel_visible;  /* 1 if task panel is visible, 0 if collapsed */
     
+    /* Selection state */
+    int selected_row;      /* Currently selected slot row (-1 if none) */
+    int selected_col;      /* Currently selected slot col (-1 if none) */
+    
     /* Game progression flags */
     int boutiqueUnlocked;   /* 1 if boutique chain is unlocked (after Skeleton Key task) */
     int boutiqueRestored;   /* 1 if boutique is fully restored (after Mannequin task) */
