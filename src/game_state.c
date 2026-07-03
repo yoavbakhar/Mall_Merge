@@ -8,6 +8,7 @@
 void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     *state = (GameState){0};
     
+    state->current_screen = SCREEN_MALL;  /* Start in Mall view */
     state->max_energy = 100;
     state->energy = 50;
     state->energy_regen_rate = 2.0f;

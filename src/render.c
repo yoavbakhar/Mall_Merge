@@ -312,6 +312,103 @@ void DrawTrashButton(GameState *state, int screenWidth, int screenHeight) {
              (int)(trashBtnRect.y + 8), 18, WHITE);
 }
 
+/* Mall shop button dimensions */
+#define MALL_BTN_WIDTH 200
+#define MALL_BTN_HEIGHT 60
+
+/* Draw the Mall screen */
+void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
+    /* Draw background */
+    ClearBackground((Color){50, 50, 70, 255});
+    
+    int centerX = screenWidth / 2;
+    int startY = 120;
+    int spacing = 80;
+    
+    /* Draw shops */
+    Rectangle janitorBtn = (Rectangle){
+        (float)(centerX - MALL_BTN_WIDTH / 2),
+        (float)(startY),
+        (float)MALL_BTN_WIDTH,
+        (float)MALL_BTN_HEIGHT
+    };
+    
+    Rectangle boutiqueBtn = (Rectangle){
+        (float)(centerX - MALL_BTN_WIDTH / 2),
+        (float)(startY + spacing),
+        (float)MALL_BTN_WIDTH,
+        (float)MALL_BTN_HEIGHT
+    };
+    
+    /* Janitor's Closet - always accessible */
+    DrawRectangleRec(janitorBtn, (Color){70, 100, 80, 255});
+    DrawRectangleLinesEx(janitorBtn, 2.0f, YELLOW);
+    DrawText("Janitor's Closet", 
+             centerX - MeasureText("Janitor's Closet", 16) / 2, 
+             startY + 18, 16, WHITE);
+    
+    /* Boutique - based on progression */
+    Color boutiqueColor;
+    const char *boutiqueText;
+    if (state->boutiqueRestored) {
+        boutiqueColor = (Color){50, 180, 80, 255};  /* Green when restored */
+        boutiqueText = "Boutique - Restored!";
+    } else if (state->boutiqueUnlocked) {
+        boutiqueColor = (Color){100, 120, 200, 255};  /* Blue when unlocked */
+        boutiqueText = "Enter Boutique";
+    } else {
+        boutiqueColor = (Color){80, 80, 80, 200};  /* Gray when locked */
+        boutiqueText = "Boutique - Locked";
+    }
+    DrawRectangleRec(boutiqueBtn, boutiqueColor);
+    DrawRectangleLinesEx(boutiqueBtn, 2.0f, DARKGRAY);
+    DrawText(boutiqueText, 
+             centerX - MeasureText(boutiqueText, 14) / 2, 
+             startY + spacing + 18, 14, WHITE);
+    
+    /* Title */
+    DrawText("MALL VIEW", centerX - 40, 40, 24, YELLOW);
+}
+
+/* Check if a shop button was clicked in Mall view */
+int CheckMallShopClick(GameState *state, Vector2 mousePos, int screenWidth) {
+    int centerX = screenWidth / 2;
+    int startY = 120;
+    int spacing = 80;
+    
+    /* Boutique button */
+    Rectangle boutiqueBtn = (Rectangle){
+        (float)(centerX - MALL_BTN_WIDTH / 2),
+        (float)(startY + spacing),
+        (float)MALL_BTN_WIDTH,
+        (float)MALL_BTN_HEIGHT
+    };
+    
+    if (mousePos.x >= boutiqueBtn.x && mousePos.x <= boutiqueBtn.x + MALL_BTN_WIDTH &&
+        mousePos.y >= boutiqueBtn.y && mousePos.y <= boutiqueBtn.y + MALL_BTN_HEIGHT) {
+        /* Boutique clicked - check if unlocked */
+        if (state->boutiqueUnlocked) {
+            return 1;  /* Enter boutique */
+        }
+        return 0;  /* Locked, no action */
+    }
+    
+    /* Janitor's Closet button */
+    Rectangle janitorBtn = (Rectangle){
+        (float)(centerX - MALL_BTN_WIDTH / 2),
+        (float)(startY),
+        (float)MALL_BTN_WIDTH,
+        (float)MALL_BTN_HEIGHT
+    };
+    
+    if (mousePos.x >= janitorBtn.x && mousePos.x <= janitorBtn.x + MALL_BTN_WIDTH &&
+        mousePos.y >= janitorBtn.y && mousePos.y <= janitorBtn.y + MALL_BTN_HEIGHT) {
+        return 2;  /* Enter janitor's closet (always accessible) */
+    }
+    
+    return 0;  /* No shop clicked */
+}
+
 /* Draw the toggle button at the bottom of the screen */
 void DrawToggleButton(int screenWidth, int screenHeight, int isVisible) {
     int btnX = (screenWidth - TOGGLE_BTN_WIDTH) / 2;
@@ -351,6 +448,13 @@ Vector2 GetGridTopLeft(int screenWidth, float slotSize) {
 void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
                 int screenWidth, int screenHeight) {
     BeginDrawing();
+    
+    /* Screen switching */
+    if (state->current_screen == SCREEN_MALL) {
+        DrawMallScreen(state, screenWidth, screenHeight);
+    } else {
+        /* SCREEN_BOARD - existing grid rendering */
+        /* Draw background */
         ClearBackground((Color){40, 40, 50, 255});
         
         /* Draw UI bar at top */
@@ -386,14 +490,12 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
                     
                     /* Draw item texture if available, otherwise fallback to colored rectangle */
                     if (item_tex && item_tex->id > 0) {
-                        /* Draw item texture */
                         DrawTextureEx(*item_tex,
                                      (Vector2){slot->bounds.x + 2, slot->bounds.y + 2},
                                      0.0f,
                                      (slot->bounds.width - 4) / item_tex->width,
                                      WHITE);
                     } else if (def) {
-                        /* Fallback to placeholder color */
                         Color itemColor = def->placeholder_color;
                         DrawRectangleRec(
                             (Rectangle){
@@ -434,14 +536,12 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
             Texture2D *drag_tex = GetItemTexture(state, state->dragged_item.item_id);
             
             if (drag_tex && drag_tex->id > 0) {
-                /* Draw dragged texture */
                 DrawTextureEx(*drag_tex,
                              (Vector2){mousePos.x - dragItemSize / 2, mousePos.y - dragItemSize / 2},
                              0.0f,
                              dragItemSize / drag_tex->width,
                              WHITE);
             } else {
-                /* Fallback to placeholder color */
                 Color dragColor = def ? def->placeholder_color : (Color){255, 200, 100, 200};
                 DrawRectangle(
                     (int)(mousePos.x - dragItemSize / 2),
@@ -474,6 +574,15 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
         
         /* Instructional text */
         DrawText("Tap generator (⚡) or drag to merge!", 20, screenHeight - 80, 12, LIGHTGRAY);
+        
+        /* Back to Mall button */
+        int backBtnX = screenWidth - 150;
+        int backBtnY = 10;
+        Rectangle backBtnRect = (Rectangle){(float)backBtnX, (float)backBtnY, 120, 30};
+        DrawRectangleRec(backBtnRect, (Color){100, 100, 150, 255});
+        DrawRectangleLinesEx(backBtnRect, 2.0f, YELLOW);
+        DrawText("Back to Mall", backBtnX + 15, backBtnY + 8, 12, WHITE);
+    }
     EndDrawing();
 }
 

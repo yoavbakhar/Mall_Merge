@@ -38,4 +38,10 @@ int CheckTrashButtonClick(GameState *state, Vector2 mousePos, int screenWidth, i
 /* Delete the currently selected item (if not a generator) */
 int DeleteSelectedItem(GameState *state);
 
+/* Draw the Mall screen */
+void DrawMallScreen(GameState *state, int screenWidth, int screenHeight);
+
+/* Check if a shop button was clicked in Mall view */
+int CheckMallShopClick(GameState *state, Vector2 mousePos, int screenWidth);
+
 #endif

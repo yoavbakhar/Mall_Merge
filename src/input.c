@@ -31,29 +31,56 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
     Vector2 mousePos = GetMousePosition();
     
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        /* Handle Mall screen clicks - check shop buttons FIRST */
+        if (state->current_screen == SCREEN_MALL) {
+            int shopResult = CheckMallShopClick(state, mousePos, screenWidth);
+            if (shopResult == 1) {  /* Enter boutique (unlocked) */
+                state->current_screen = SCREEN_BOARD;
+                return;
+            } else if (shopResult == 2) {  /* Enter janitor's closet */
+                state->current_screen = SCREEN_BOARD;
+                return;
+            }
+        }
+        
         int row = -1, col = -1;
         GetSlotAtPosition(mousePos, gridTopLeft, slotSize, &row, &col);
         
-        /* Check for task panel UI clicks (outside grid) */
-        if (row < 0 && col < 0) {
-            if (state->skeleton_key_task.is_available) {
-                /* Check toggle button */
-                if (CheckToggleButtonClick(mousePos, screenWidth, screenHeight)) {
-                    state->task_panel_visible = !state->task_panel_visible;
-                    return;
+        /* Handle Board screen clicks */
+        if (state->current_screen == SCREEN_BOARD) {
+            /* Check for Back to Mall button (always check in top area) */
+            int backBtnX = screenWidth - 150;
+            int backBtnY = 10;
+            if (mousePos.x >= backBtnX && mousePos.x <= backBtnX + 120 &&
+                mousePos.y >= backBtnY && mousePos.y <= backBtnY + 30) {
+                state->current_screen = SCREEN_MALL;
+                state->selected_row = -1;
+                state->selected_col = -1;
+                return;
+            }
+            
+            /* Check for other UI buttons when click is outside grid */
+            if (row < 0 && col < 0) {
+                /* Check for task panel UI clicks */
+                if (state->skeleton_key_task.is_available) {
+                    /* Check toggle button */
+                    if (CheckToggleButtonClick(mousePos, screenWidth, screenHeight)) {
+                        state->task_panel_visible = !state->task_panel_visible;
+                        return;
+                    }
+                    /* Check complete task button */
+                    if (CheckTaskButtonClick(state, mousePos, screenWidth, screenHeight)) {
+                        TaskOutcome outcome = ExecuteTask(&state->skeleton_key_task, state);
+                        SaveGameState(state, "save.dat");
+                        return;
+                    }
                 }
-                /* Check complete task button */
-                if (CheckTaskButtonClick(state, mousePos, screenWidth, screenHeight)) {
-                    TaskOutcome outcome = ExecuteTask(&state->skeleton_key_task, state);
+                /* Check for trash button click */
+                if (CheckTrashButtonClick(state, mousePos, screenWidth, screenHeight)) {
+                    DeleteSelectedItem(state);
                     SaveGameState(state, "save.dat");
                     return;
                 }
-            }
-            /* Check for trash button click (outside grid) */
-            if (CheckTrashButtonClick(state, mousePos, screenWidth, screenHeight)) {
-                DeleteSelectedItem(state);
-                SaveGameState(state, "save.dat");
-                return;
             }
         }
         

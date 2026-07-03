@@ -6,6 +6,12 @@
 #include "items.h"
 #include "constants.h"
 
+/* Screen states */
+typedef enum {
+    SCREEN_MALL,
+    SCREEN_BOARD
+} GameScreen;
+
 /* Task outcome flags */
 typedef enum {
     TASK_OUTCOME_SUCCESS = 1,
@@ -35,6 +41,9 @@ typedef struct {
 #define TEXTURE_CACHE_SIZE 20
 
 typedef struct {
+    /* Current screen state */
+    GameScreen current_screen;
+    
     /* Grid state */
     Slot grid[GRID_ROWS][GRID_COLS];
     
