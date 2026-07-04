@@ -46,12 +46,13 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     state->skeleton_key_task = CreateSkeletonKeyExchangeTask();
     state->task_panel_visible = 1;  /* Task panel visible by default */
     
-    /* Initialize second task: Mannequin -> Final reward */
+/* Initialize second task: Mannequin -> Final reward */
     state->mannequin_task = (Task){
         .required_item_id = ITEM_ID_DESIGNERS_MANNEQUIN,
         .reward_item_id = ITEM_ID_EMPTY,  /* No physical reward, just completion */
         .is_available = 0,  /* Not available until boutique is unlocked */
-        .description = "Restore the Boutique by trading the Designer's Mannequin"
+        .description = "Restore the Boutique by trading the Designer's Mannequin",
+        .coinReward = 250  /* High reward for boutique restoration */
     };
     
     /* Initialize progression flags */

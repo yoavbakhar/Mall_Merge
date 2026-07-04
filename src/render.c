@@ -321,6 +321,13 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
     /* Draw background */
     ClearBackground((Color){50, 50, 70, 255});
     
+    /* Draw UI bar at top */
+    DrawRectangle(0, 0, screenWidth, 50, (Color){30, 30, 40, 255});
+    DrawText(TextFormat("Energy: %d/%d", state->energy, state->max_energy),
+             20, 15, 16, YELLOW);
+    DrawText(TextFormat("Coins: %d", state->coins),
+             screenWidth - 120, 15, 16, (Color){144, 238, 144, 255});
+    
     int centerX = screenWidth / 2;
     int startY = 120;
     int spacing = 80;
@@ -366,8 +373,8 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
              centerX - MeasureText(boutiqueText, 14) / 2, 
              startY + spacing + 18, 14, WHITE);
     
-    /* Title */
-    DrawText("MALL VIEW", centerX - 40, 40, 24, YELLOW);
+    /* Title - properly centered below UI bar */
+    DrawText("MALL VIEW", centerX - MeasureText("MALL VIEW", 24) / 2, 65, 24, YELLOW);
 }
 
 /* Check if a shop button was clicked in Mall view */

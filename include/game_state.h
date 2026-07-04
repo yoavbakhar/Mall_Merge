@@ -25,6 +25,7 @@ typedef struct Task {
     ItemID reward_item_id;
     int is_available;
     const char *description;
+    int coinReward;  /* Coins awarded when task is completed */
 } Task;
 
 typedef struct GameState {

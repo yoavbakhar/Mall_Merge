@@ -25,8 +25,11 @@ TaskOutcome ExecuteTask(Task *task, GameState *state) {
                     slot->item.is_generator = reward_def->is_generator;
                 }
                 
-                /* Mark task as completed */
+/* Mark task as completed */
                 task->is_available = 0;
+                
+                /* Award coins */
+                state->coins += task->coinReward;
                 
                 /* Handle progression flags based on which task was completed */
                 if (task->required_item_id == ITEM_ID_SKELETON_KEY) {
@@ -53,6 +56,7 @@ Task CreateSkeletonKeyExchangeTask(void) {
         .required_item_id = ITEM_ID_SKELETON_KEY,
         .reward_item_id = ITEM_ID_GENERATOR_SEWING_KIT,
         .is_available = 1,
-        .description = "Trade the Skeleton Key for the Sewing Kit Generator"
+        .description = "Trade the Skeleton Key for the Sewing Kit Generator",
+        .coinReward = 100
     };
 }
