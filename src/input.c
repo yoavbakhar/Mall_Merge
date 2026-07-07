@@ -4,6 +4,7 @@
 #include "item.h"
 #include "task.h"
 #include "render.h"
+#include "audio.h"
 
 /* Task button dimensions (must match render.c) */
 #define TASK_BTN_WIDTH 200
@@ -44,6 +45,7 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
             /* Check for boutique upgrade button click */
             if (CheckMallUpgradeClick(state, mousePos, screenWidth)) {
                 PurchaseBoutiqueUpgrade(state);
+                PlayCoinSound();  /* Coin sound for upgrade purchase */
                 SaveGameState(state, "save.dat");
                 return;
             }
@@ -77,6 +79,7 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
                     /* Check complete task button */
                     if (CheckTaskButtonClick(state, mousePos, screenWidth, screenHeight)) {
                         TaskOutcome outcome = ExecuteTask(&state->skeleton_key_task, state);
+                        PlayCoinSound();  /* Coin sound for task completion */
                         SaveGameState(state, "save.dat");
                         return;
                     }
@@ -84,6 +87,7 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
                 /* Check for trash button click */
                 if (CheckTrashButtonClick(state, mousePos, screenWidth, screenHeight)) {
                     DeleteSelectedItem(state);
+                    PlayTrashSound();  /* Trash sound for deletion */
                     SaveGameState(state, "save.dat");
                     return;
                 }

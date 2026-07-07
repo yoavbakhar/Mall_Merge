@@ -4,10 +4,18 @@
 #include "input.h"
 #include "render.h"
 #include "constants.h"
+#include "audio.h"
+#include "particles.h"
 
 int main(void) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Mall Merge: Abandoned Vibes");
     SetTargetFPS(60);
+
+    /* Initialize audio system */
+    AudioInit();
+    
+    /* Initialize particle system */
+    ParticlesInit();
 
     /* Initialize game state */
     GameState state;
@@ -22,6 +30,9 @@ int main(void) {
         float dt = GetFrameTime();
 
         /* ====== UPDATE ====== */
+        
+        /* Update particles */
+        UpdateParticles(dt);
         
         /* Regenerate energy */
         state.energy_regen_timer += dt;
@@ -46,6 +57,8 @@ int main(void) {
     }
 
     RenderCleanup(&state);
+    ParticlesCleanup();
+    AudioCleanup();
     CloseWindow();
     return 0;
 }

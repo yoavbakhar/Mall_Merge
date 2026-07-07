@@ -13,7 +13,7 @@ include(FetchContent)
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG master # Using master ensures the most modern CMake compatibility
+    GIT_TAG master
 )
 
 # Disable building extras we don't need for the merge game
@@ -35,6 +35,8 @@ add_executable(MallMerge
     src/input.c
     src/render.c
     src/task.c
+    src/particles.c
+    src/audio.c
 )
 
 # -------------------------
