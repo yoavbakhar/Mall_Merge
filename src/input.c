@@ -41,6 +41,9 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
             } else if (shopResult == 2) {  /* Enter janitor's closet */
                 state->current_screen = SCREEN_BOARD;
                 return;
+            } else if (shopResult == 3) {  /* Enter arcade */
+                state->current_screen = SCREEN_BOARD;
+                return;
             }
             /* Check for boutique upgrade button click */
             if (CheckMallUpgradeClick(state, mousePos, screenWidth)) {
@@ -70,7 +73,8 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
             /* Check for other UI buttons when click is outside grid */
             if (row < 0 && col < 0) {
                 /* Check for task panel UI clicks */
-                if (state->skeleton_key_task.is_available) {
+                Task *activeTask = GetActiveTask(state);
+                if (activeTask) {
                     /* Check toggle button */
                     if (CheckToggleButtonClick(mousePos, screenWidth, screenHeight)) {
                         state->task_panel_visible = !state->task_panel_visible;
@@ -78,7 +82,7 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
                     }
                     /* Check complete task button */
                     if (CheckTaskButtonClick(state, mousePos, screenWidth, screenHeight)) {
-                        TaskOutcome outcome = ExecuteTask(&state->skeleton_key_task, state);
+                        TaskOutcome outcome = ExecuteTask(activeTask, state);
                         PlayCoinSound();  /* Coin sound for task completion */
                         SaveGameState(state, "save.dat");
                         return;

@@ -18,14 +18,14 @@
 #define TOGGLE_BTN_HEIGHT 30
 
 /* Check if the required item is present on the grid */
-int IsRequiredItemOnGrid(GameState *state) {
-    if (!state->skeleton_key_task.is_available) {
+int IsRequiredItemOnGrid(Task *task, GameState *state) {
+    if (!task) {
         return 0;
     }
     
     for (int r = 0; r < GRID_ROWS; r++) {
         for (int c = 0; c < GRID_COLS; c++) {
-            if (state->grid[r][c].item.item_id == state->skeleton_key_task.required_item_id) {
+            if (state->grid[r][c].item.item_id == task->required_item_id) {
                 return 1;
             }
         }
@@ -35,11 +35,12 @@ int IsRequiredItemOnGrid(GameState *state) {
 
 /* Check if the complete task button was clicked (inside task panel) */
 int CheckTaskButtonClick(GameState *state, Vector2 mousePos, int screenWidth, int screenHeight) {
-    if (!state->skeleton_key_task.is_available || !state->task_panel_visible) {
+    Task *activeTask = GetActiveTask(state);
+    if (!activeTask || !state->task_panel_visible) {
         return 0;
     }
     
-    if (!IsRequiredItemOnGrid(state)) {
+    if (!IsRequiredItemOnGrid(activeTask, state)) {
         return 0;
     }
     
@@ -67,7 +68,8 @@ int CheckToggleButtonClick(Vector2 mousePos, int screenWidth, int screenHeight) 
 
 /* Draw the task panel on the right side of the screen */
 void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int screenHeight) {
-    if (!state->skeleton_key_task.is_available) {
+    Task *activeTask = GetActiveTask(state);
+    if (!activeTask) {
         return;
     }
     
@@ -92,9 +94,9 @@ void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int scre
     int centerX = panelX + TASK_PANEL_WIDTH / 2;
     int itemSlotSize = TASK_PANEL_ICON_SIZE + 8;
     
-    int hasRequiredItem = IsRequiredItemOnGrid(state);
+    int hasRequiredItem = IsRequiredItemOnGrid(activeTask, state);
     
-    ItemID requiredID = state->skeleton_key_task.required_item_id;
+    ItemID requiredID = activeTask->required_item_id;
     const ItemDefinition *requiredDef = GetItemDefinition(requiredID);
     Texture2D *requiredTex = GetItemTexture(state, requiredID);
     
@@ -130,7 +132,7 @@ void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int scre
     int arrowY = itemY + itemSlotSize + 25;
     DrawText("↓", centerX - 5, arrowY, 18, hasRequiredItem ? GREEN : GRAY);
     
-    ItemID rewardID = state->skeleton_key_task.reward_item_id;
+    ItemID rewardID = activeTask->reward_item_id;
     const ItemDefinition *rewardDef = GetItemDefinition(rewardID);
     Texture2D *rewardTex = GetItemTexture(state, rewardID);
     
@@ -163,8 +165,6 @@ void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int scre
         DrawText("READY!", centerX - 25, statusY, 14, GREEN);
     } else {
         DrawText("Find the", centerX - 28, statusY, 12, GRAY);
-        DrawText("Skeleton Key", centerX - 38, statusY + 16, 12, GRAY);
-        DrawText("to complete", centerX - 40, statusY + 34, 12, GRAY);
     }
     
     int completeBtnY = screenHeight - 160;
@@ -307,7 +307,7 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
     
     int centerX = screenWidth / 2;
     int startY = 120;
-    int spacing = 120;
+    int spacing = 160;
     
     Rectangle janitorStore = (Rectangle){
         (float)(centerX - MALL_BTN_WIDTH / 2),
@@ -393,6 +393,53 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
                  (int)(upgradeBtn.y + 7), 10, WHITE);
     }
     
+    Rectangle arcadeStore = (Rectangle){
+        (float)(centerX - MALL_BTN_WIDTH / 2),
+        (float)(startY + spacing * 2),
+        (float)MALL_BTN_WIDTH,
+        (float)MALL_BTN_HEIGHT
+    };
+    
+    if (state->arcadeRestored) {
+        storeColor = (Color){100, 180, 255, 255};
+        borderColor = (Color){80, 255, 255, 255};
+        storeLabel = "Arcade - Restored!";
+    } else if (state->arcadeUnlocked) {
+        storeColor = (Color){80, 80, 180, 255};
+        borderColor = (Color){150, 180, 255, 255};
+        storeLabel = "Enter Arcade";
+    } else {
+        storeColor = (Color){50, 50, 60, 200};
+        borderColor = (Color){80, 80, 100, 200};
+        storeLabel = "Locked";
+    }
+    
+    DrawRectangleRec(arcadeStore, storeColor);
+    DrawRectangleLinesEx(arcadeStore, 3.0f, borderColor);
+    
+    if (state->arcadeUnlocked) {
+        DrawCircle(arcadeStore.x + arcadeStore.width - 25, arcadeStore.y + arcadeStore.height / 2, 6, (Color){180, 200, 220, 255});
+    }
+    
+    labelWidth = MeasureText(storeLabel, 14);
+    DrawText(storeLabel, centerX - labelWidth / 2, startY + spacing * 2 + 20, 14, WHITE);
+    
+    if (!state->arcadeUnlocked) {
+        DrawText("🔒", centerX - 8, startY + spacing * 2 + 10, 16, (Color){150, 150, 180, 200});
+        const char *arcadeLockedHint = "Complete Boutique Tasks";
+        int arcadeHintWidth = MeasureText(arcadeLockedHint, 10);
+        DrawText(arcadeLockedHint, centerX - arcadeHintWidth / 2, startY + spacing * 2 + 40, 10, GRAY);
+    }
+    
+    if (state->arcadeRestored) {
+        DrawRectangle(arcadeStore.x, arcadeStore.y - 15, arcadeStore.width, 10, (Color){0, 255, 255, 200});
+        DrawText("★", arcadeStore.x + 20, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
+        DrawText("★", arcadeStore.x + 50, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
+        DrawText("★", arcadeStore.x + 80, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
+        DrawText("★", arcadeStore.x + 110, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
+        DrawText("HIGH SCORE!", centerX - 40, startY + spacing * 2 - 30, 12, (Color){0, 255, 255, 255});
+    }
+    
     DrawText("MALL VIEW", centerX - MeasureText("MALL VIEW", 24) / 2, 65, 24, YELLOW);
 }
 
@@ -400,7 +447,7 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
 int CheckMallShopClick(GameState *state, Vector2 mousePos, int screenWidth) {
     int centerX = screenWidth / 2;
     int startY = 120;
-    int spacing = 120;
+    int spacing = 160;
     
     Rectangle boutiqueBtn = (Rectangle){
         (float)(centerX - MALL_BTN_WIDTH / 2),
@@ -413,6 +460,21 @@ int CheckMallShopClick(GameState *state, Vector2 mousePos, int screenWidth) {
         mousePos.y >= boutiqueBtn.y && mousePos.y <= boutiqueBtn.y + MALL_BTN_HEIGHT) {
         if (state->boutiqueUnlocked) {
             return 1;
+        }
+        return 0;
+    }
+    
+    Rectangle arcadeBtn = (Rectangle){
+        (float)(centerX - MALL_BTN_WIDTH / 2),
+        (float)(startY + spacing * 2),
+        (float)MALL_BTN_WIDTH,
+        (float)MALL_BTN_HEIGHT
+    };
+    
+    if (mousePos.x >= arcadeBtn.x && mousePos.x <= arcadeBtn.x + MALL_BTN_WIDTH &&
+        mousePos.y >= arcadeBtn.y && mousePos.y <= arcadeBtn.y + MALL_BTN_HEIGHT) {
+        if (state->arcadeUnlocked) {
+            return 3;
         }
         return 0;
     }
@@ -440,7 +502,7 @@ int CheckMallUpgradeClick(GameState *state, Vector2 mousePos, int screenWidth) {
     
     int centerX = screenWidth / 2;
     int startY = 120;
-    int spacing = 120;
+    int spacing = 160;
     
     Rectangle upgradeBtn = (Rectangle){
         (float)(centerX + MALL_BTN_WIDTH / 2 - UPGRADE_BTN_WIDTH - 10),
@@ -608,12 +670,13 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
         DrawTaskPanel(state, mousePos, screenWidth, screenHeight);
         DrawTrashButton(state, screenWidth, screenHeight);
         
-        if (state->skeleton_key_task.is_available) {
+        Task *activeTask = GetActiveTask(state);
+        if (activeTask) {
             DrawToggleButton(screenWidth, screenHeight, state->task_panel_visible);
         }
         
-        if (!state->skeleton_key_task.is_available) {
-            const char *completedText = "Task Completed!";
+        if (!activeTask) {
+            const char *completedText = "All Tasks Complete!";
             int textWidth = MeasureText(completedText, 16);
             DrawText(completedText, (screenWidth - textWidth) / 2, screenHeight - 110, 16, GREEN);
         }
@@ -627,7 +690,7 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
         DrawRectangleLinesEx(backBtnRect, 2.0f, YELLOW);
         DrawText("Back to Mall", backBtnX + 15, backBtnY + 8, 12, WHITE);
         
-        DrawParticles();  /* Draw particles on top */
+        DrawParticles();
     }
     EndDrawing();
 }

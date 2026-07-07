@@ -8,7 +8,7 @@
 void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     *state = (GameState){0};
     
-    state->current_screen = SCREEN_MALL;  /* Start in Mall view */
+    state->current_screen = SCREEN_MALL;
     state->max_energy = 100;
     state->energy = 50;
     state->energy_regen_rate = 2.0f;
@@ -16,7 +16,6 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     state->generator_cooldown_max = GENERATOR_COOLDOWN_MAX;
     state->generator_cooldown = 0.0f;
     
-    /* Initialize grid layout */
     float slotSize = GetSlotSize(screenWidth);
     Vector2 gridTopLeft = GetGridTopLeft(screenWidth, slotSize);
     
@@ -33,57 +32,58 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
         }
     }
     
-    /* Place initial generator at (0,0) */
     state->grid[0][0].item.item_id = ITEM_ID_GENERATOR_LOST_FOUND;
     state->grid[0][0].item.is_generator = 1;
     
-    /* Spawn test items from Chain A */
     SpawnItem(state, ITEM_ID_FADED_RECEIPT, -1, -1);
     SpawnItem(state, ITEM_ID_FADED_RECEIPT, -1, -1);
     SpawnItem(state, ITEM_ID_FADED_RECEIPT, -1, -1);
     
-    /* Initialize task system */
     state->skeleton_key_task = CreateSkeletonKeyExchangeTask();
-    state->task_panel_visible = 1;  /* Task panel visible by default */
+    state->task_panel_visible = 1;
     
-    /* Initialize second task: Mannequin -> Final reward */
     state->mannequin_task = (Task){
         .required_item_id = ITEM_ID_DESIGNERS_MANNEQUIN,
-        .reward_item_id = ITEM_ID_EMPTY,  /* No physical reward, just completion */
-        .is_available = 0,  /* Not available until boutique is unlocked */
+        .reward_item_id = ITEM_ID_NEON_TOKEN,
+        .is_available = 0,
         .description = "Restore the Boutique by trading the Designer's Mannequin",
-        .coinReward = 250  /* High reward for boutique restoration */
+        .coinReward = 250
     };
     
-    /* Initialize progression flags */
+    state->arcade_task = (Task){
+        .required_item_id = ITEM_ID_HIGH_SCORE_TROPHY,
+        .reward_item_id = ITEM_ID_EMPTY,
+        .is_available = 0,
+        .description = "Master the Arcade by trading the High Score Trophy",
+        .coinReward = 500
+    };
+    
     state->boutiqueUnlocked = 0;
     state->boutiqueRestored = 0;
     state->boutiqueUpgraded = 0;
+    state->arcadeUnlocked = 0;
+    state->arcadeRestored = 0;
 }
 
 Texture2D *GetItemTexture(GameState *state, ItemID item_id) {
-    /* Check if already in cache */
     for (int i = 0; i < state->texture_cache_count; i++) {
         if (state->texture_cache[i].item_id == item_id) {
             return &state->texture_cache[i].texture;
         }
     }
     
-    /* Not in cache, load it */
     const ItemDefinition *def = GetItemDefinition(item_id);
     if (!def || !def->asset_path) {
         return NULL;
     }
     
-    /* Check cache not full */
     if (state->texture_cache_count >= TEXTURE_CACHE_SIZE) {
-        return NULL;  /* Cache full, shouldn't happen with our limited items */
+        return NULL;
     }
     
-    /* Load texture and add to cache */
     Texture2D tex = LoadTexture(def->asset_path);
     if (tex.id <= 0) {
-        return NULL;  /* Failed to load */
+        return NULL;
     }
     
     state->texture_cache[state->texture_cache_count].item_id = item_id;
@@ -94,7 +94,6 @@ Texture2D *GetItemTexture(GameState *state, ItemID item_id) {
 }
 
 void GameStateCleanup(GameState *state) {
-    /* Unload all cached textures */
     for (int i = 0; i < state->texture_cache_count; i++) {
         if (state->texture_cache[i].texture.id > 0) {
             UnloadTexture(state->texture_cache[i].texture);
@@ -102,28 +101,24 @@ void GameStateCleanup(GameState *state) {
     }
 }
 
-/* Save game state to binary file */
 int SaveGameState(GameState *state, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        return 0;  /* Failed to open file */
+        return 0;
     }
     
-    /* Write the entire GameState struct to file */
     size_t written = fwrite(state, sizeof(GameState), 1, file);
     fclose(file);
     
     return (written == 1) ? 1 : 0;
 }
 
-/* Load game state from binary file */
 int LoadGameState(GameState *state, const char *filename) {
     FILE *file = fopen(filename, "rb");
     if (!file) {
-        return 0;  /* Failed to open file (no save exists) */
+        return 0;
     }
     
-    /* Read the entire GameState struct from file */
     size_t read = fread(state, sizeof(GameState), 1, file);
     fclose(file);
     

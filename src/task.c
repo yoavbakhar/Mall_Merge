@@ -4,42 +4,35 @@
 #include "constants.h"
 
 TaskOutcome ExecuteTask(Task *task, GameState *state) {
-    /* Check if task is already completed */
     if (!task->is_available) {
         return TASK_OUTCOME_ALREADY_COMPLETED;
     }
     
-    /* Scan the grid for the required item */
     for (int r = 0; r < GRID_ROWS; r++) {
         for (int c = 0; c < GRID_COLS; c++) {
             Slot *slot = &state->grid[r][c];
             
-            /* Found the required item */
             if (slot->item.item_id == task->required_item_id) {
-                /* Replace with reward item */
                 slot->item.item_id = task->reward_item_id;
                 
-                /* Update is_generator flag based on reward definition */
                 const ItemDefinition *reward_def = GetItemDefinition(task->reward_item_id);
                 if (reward_def) {
                     slot->item.is_generator = reward_def->is_generator;
                 }
                 
-/* Mark task as completed */
                 task->is_available = 0;
                 
-                /* Award coins */
                 state->coins += task->coinReward;
                 
-                /* Handle progression flags based on which task was completed */
                 if (task->required_item_id == ITEM_ID_SKELETON_KEY) {
-                    /* Skeleton Key task completed - unlock boutique */
                     state->boutiqueUnlocked = 1;
-                    /* Enable the mannequin task */
                     state->mannequin_task.is_available = 1;
                 } else if (task->required_item_id == ITEM_ID_DESIGNERS_MANNEQUIN) {
-                    /* Mannequin task completed - boutique is restored */
                     state->boutiqueRestored = 1;
+                    state->arcadeUnlocked = 1;
+                    state->arcade_task.is_available = 1;
+                } else if (task->required_item_id == ITEM_ID_HIGH_SCORE_TROPHY) {
+                    state->arcadeRestored = 1;
                 }
                 
                 return TASK_OUTCOME_SUCCESS;
@@ -47,7 +40,6 @@ TaskOutcome ExecuteTask(Task *task, GameState *state) {
         }
     }
     
-    /* Required item not found on grid */
     return TASK_OUTCOME_ITEM_NOT_FOUND;
 }
 
@@ -59,4 +51,17 @@ Task CreateSkeletonKeyExchangeTask(void) {
         .description = "Trade the Skeleton Key for the Sewing Kit Generator",
         .coinReward = 100
     };
+}
+
+Task* GetActiveTask(GameState *state) {
+    if (state->skeleton_key_task.is_available) {
+        return &state->skeleton_key_task;
+    }
+    if (state->mannequin_task.is_available) {
+        return &state->mannequin_task;
+    }
+    if (state->arcade_task.is_available) {
+        return &state->arcade_task;
+    }
+    return NULL;
 }

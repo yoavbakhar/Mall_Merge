@@ -23,6 +23,13 @@ typedef enum {
     ITEM_ID_VINTAGE_SCISSORS,            /* Level 4 */
     ITEM_ID_DESIGNERS_MANNEQUIN,         /* Level 5 */
     
+    /* Chain C: Neon Arcade (no generator - obtained via task) */
+    ITEM_ID_NEON_TOKEN = 300,            /* Level 1 */
+    ITEM_ID_JOYSTICK,                    /* Level 2 */
+    ITEM_ID_GAME_CARTRIDGE,              /* Level 3 */
+    ITEM_ID_ARCADE_CABINET,              /* Level 4 */
+    ITEM_ID_HIGH_SCORE_TROPHY,           /* Level 5 - Final Room Restoration Item */
+    
     ITEM_ID_COUNT
 } ItemID;
 
@@ -31,6 +38,7 @@ typedef enum {
     CHAIN_EMPTY = 0,
     CHAIN_JANITORS_SECRET = 1,
     CHAIN_THREAD_BARE = 2,
+    CHAIN_NEON_ARCADE = 3,
 } ChainID;
 
 /* Item definition - metadata for each item type */

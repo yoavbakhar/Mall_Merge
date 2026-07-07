@@ -42,33 +42,45 @@ static const ItemDefinition item_definitions[] = {
     
     {ITEM_ID_DESIGNERS_MANNEQUIN, CHAIN_THREAD_BARE, 5, 0,
      "The Designer's Mannequin", "assets/chain_1_4.png", {200, 120, 180, 255}},
+    
+    /* Chain C: Neon Arcade */
+    {ITEM_ID_NEON_TOKEN, CHAIN_NEON_ARCADE, 1, 0,
+     "Neon Token", "assets/chain_2_0.png", {255, 100, 200, 255}},
+    
+    {ITEM_ID_JOYSTICK, CHAIN_NEON_ARCADE, 2, 0,
+     "Joystick", "assets/chain_2_1.png", {255, 150, 100, 255}},
+    
+    {ITEM_ID_GAME_CARTRIDGE, CHAIN_NEON_ARCADE, 3, 0,
+     "Game Cartridge", "assets/chain_2_2.png", {100, 200, 255, 255}},
+    
+    {ITEM_ID_ARCADE_CABINET, CHAIN_NEON_ARCADE, 4, 0,
+     "Arcade Cabinet", "assets/chain_2_3.png", {100, 255, 200, 255}},
+    
+    {ITEM_ID_HIGH_SCORE_TROPHY, CHAIN_NEON_ARCADE, 5, 0,
+     "High Score Trophy", NULL, {255, 255, 100, 255}},
 };
 
 #define ITEM_DEFINITIONS_COUNT (sizeof(item_definitions) / sizeof(ItemDefinition))
 
 const ItemDefinition *GetItemDefinition(ItemID id) {
-    /* Search through the definitions for matching ID */
     for (int i = 0; i < ITEM_DEFINITIONS_COUNT; i++) {
         if (item_definitions[i].id == id) {
             return &item_definitions[i];
         }
     }
     
-    /* Not found, return empty item definition */
     return &item_definitions[0];
 }
 
 ItemID GetNextItemInChain(ItemID current_id) {
     const ItemDefinition *current = GetItemDefinition(current_id);
     
-    /* Generators and max level items don't merge further */
     if (current->is_generator || current->level >= 5) {
         return ITEM_ID_EMPTY;
     }
     
     int next_level = current->level + 1;
     
-    /* Find item in same chain with next level */
     for (int i = 0; i < ITEM_DEFINITIONS_COUNT; i++) {
         if (item_definitions[i].chain_id == current->chain_id && 
             item_definitions[i].level == next_level &&
@@ -77,7 +89,7 @@ ItemID GetNextItemInChain(ItemID current_id) {
         }
     }
     
-    return ITEM_ID_EMPTY;  /* Not found */
+    return ITEM_ID_EMPTY;
 }
 
 ItemID GetChainLevel1Item(ChainID chain_id) {

@@ -25,12 +25,12 @@ typedef struct Task {
     ItemID reward_item_id;
     int is_available;
     const char *description;
-    int coinReward;  /* Coins awarded when task is completed */
+    int coinReward;
 } Task;
 
 typedef struct GameState {
     Item item;
-    Rectangle bounds;  /* Screen position & size of this slot */
+    Rectangle bounds;
 } Slot;
 
 /* Texture cache entry */
@@ -49,21 +49,21 @@ typedef struct {
     Slot grid[GRID_ROWS][GRID_COLS];
     
     /* Drag-and-drop state machine */
-    int dragging;                    /* 1 if currently dragging, 0 otherwise */
-    int drag_from_row, drag_from_col;  /* Origin slot of dragged item */
-    Item dragged_item;               /* Copy of item being dragged */
-    int tap_row, tap_col;            /* Slot where mouse was pressed (for tap detection) */
-    float tap_timer;                 /* Time since mouse pressed (detect tap vs drag) */
+    int dragging;
+    int drag_from_row, drag_from_col;
+    Item dragged_item;
+    int tap_row, tap_col;
+    float tap_timer;
     
     /* Game economy */
     int energy;
     int max_energy;
-    float energy_regen_rate;  /* Energy points per second */
+    float energy_regen_rate;
     float energy_regen_timer;
     
     int coins;
     
-    /* Generator cooldown (shared across all generators for now) */
+    /* Generator cooldown */
     float generator_cooldown;
     float generator_cooldown_max;
     
@@ -73,17 +73,20 @@ typedef struct {
     
     /* Task system */
     Task skeleton_key_task;
-    Task mannequin_task;  /* Second task: Mannequin -> Final reward */
-    int task_panel_visible;  /* 1 if task panel is visible, 0 if collapsed */
+    Task mannequin_task;
+    Task arcade_task;
+    int task_panel_visible;
     
     /* Selection state */
-    int selected_row;      /* Currently selected slot row (-1 if none) */
-    int selected_col;      /* Currently selected slot col (-1 if none) */
+    int selected_row;
+    int selected_col;
     
     /* Game progression flags */
-    int boutiqueUnlocked;   /* 1 if boutique chain is unlocked (after Skeleton Key task) */
-    int boutiqueRestored;   /* 1 if boutique is fully restored (after Mannequin task) */
-    int boutiqueUpgraded;   /* 1 if boutique has cosmetic upgrade purchased */
+    int boutiqueUnlocked;
+    int boutiqueRestored;
+    int boutiqueUpgraded;
+    int arcadeUnlocked;
+    int arcadeRestored;
 } GameState;
 
 /* Initialize game state */
