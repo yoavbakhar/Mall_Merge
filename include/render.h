@@ -44,4 +44,10 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight);
 /* Check if a shop button was clicked in Mall view */
 int CheckMallShopClick(GameState *state, Vector2 mousePos, int screenWidth);
 
+/* Check if the boutique upgrade button was clicked */
+int CheckMallUpgradeClick(GameState *state, Vector2 mousePos, int screenWidth);
+
+/* Purchase boutique upgrade (costs 50 coins) */
+int PurchaseBoutiqueUpgrade(GameState *state);
+
 #endif

@@ -46,7 +46,7 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     state->skeleton_key_task = CreateSkeletonKeyExchangeTask();
     state->task_panel_visible = 1;  /* Task panel visible by default */
     
-/* Initialize second task: Mannequin -> Final reward */
+    /* Initialize second task: Mannequin -> Final reward */
     state->mannequin_task = (Task){
         .required_item_id = ITEM_ID_DESIGNERS_MANNEQUIN,
         .reward_item_id = ITEM_ID_EMPTY,  /* No physical reward, just completion */
@@ -58,6 +58,7 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     /* Initialize progression flags */
     state->boutiqueUnlocked = 0;
     state->boutiqueRestored = 0;
+    state->boutiqueUpgraded = 0;
 }
 
 Texture2D *GetItemTexture(GameState *state, ItemID item_id) {

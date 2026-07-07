@@ -41,6 +41,12 @@ void ProcessInput(GameState *state, Vector2 gridTopLeft, float slotSize,
                 state->current_screen = SCREEN_BOARD;
                 return;
             }
+            /* Check for boutique upgrade button click */
+            if (CheckMallUpgradeClick(state, mousePos, screenWidth)) {
+                PurchaseBoutiqueUpgrade(state);
+                SaveGameState(state, "save.dat");
+                return;
+            }
         }
         
         int row = -1, col = -1;

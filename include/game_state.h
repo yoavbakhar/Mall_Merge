@@ -83,6 +83,7 @@ typedef struct {
     /* Game progression flags */
     int boutiqueUnlocked;   /* 1 if boutique chain is unlocked (after Skeleton Key task) */
     int boutiqueRestored;   /* 1 if boutique is fully restored (after Mannequin task) */
+    int boutiqueUpgraded;   /* 1 if boutique has cosmetic upgrade purchased */
 } GameState;
 
 /* Initialize game state */

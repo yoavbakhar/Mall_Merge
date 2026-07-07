@@ -316,10 +316,22 @@ void DrawTrashButton(GameState *state, int screenWidth, int screenHeight) {
 #define MALL_BTN_WIDTH 200
 #define MALL_BTN_HEIGHT 60
 
-/* Draw the Mall screen */
+/* Mall upgrade button dimensions */
+#define UPGRADE_BTN_WIDTH 80
+#define UPGRADE_BTN_HEIGHT 25
+
+/* Cost for boutique upgrade */
+#define BOUTIQUE_UPGRADE_COST 50
+
+/* Draw the Mall screen - visual corridor with storefronts */
 void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
-    /* Draw background */
-    ClearBackground((Color){50, 50, 70, 255});
+    /* Draw background - liminal mall corridor vibe */
+    ClearBackground((Color){30, 30, 45, 255});
+    
+    /* Draw corridor floor lines */
+    for (int y = 100; y < screenHeight; y += 40) {
+        DrawLine(0, y, screenWidth, y, (Color){50, 50, 70, 100});
+    }
     
     /* Draw UI bar at top */
     DrawRectangle(0, 0, screenWidth, 50, (Color){30, 30, 40, 255});
@@ -330,48 +342,106 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
     
     int centerX = screenWidth / 2;
     int startY = 120;
-    int spacing = 80;
+    int spacing = 120;
     
-    /* Draw shops */
-    Rectangle janitorBtn = (Rectangle){
+    /* Draw Janitor's Closet storefront - baseline accessible room */
+    Rectangle janitorStore = (Rectangle){
         (float)(centerX - MALL_BTN_WIDTH / 2),
         (float)(startY),
         (float)MALL_BTN_WIDTH,
         (float)MALL_BTN_HEIGHT
     };
     
-    Rectangle boutiqueBtn = (Rectangle){
+    /* Draw storefront panel with door-like appearance */
+    DrawRectangleRec(janitorStore, (Color){60, 80, 100, 255});
+    DrawRectangleLinesEx(janitorStore, 3.0f, (Color){100, 150, 200, 255});
+    /* Door handle */
+    DrawCircle(janitorStore.x + janitorStore.width - 25, janitorStore.y + janitorStore.height / 2, 6, (Color){180, 200, 220, 255});
+    /* Store label */
+    const char *janitorLabel = "Janitor's Closet";
+    int janLabelWidth = MeasureText(janitorLabel, 14);
+    DrawText(janitorLabel, centerX - janLabelWidth / 2, startY + 20, 14, WHITE);
+    
+    /* Draw Boutique storefront - visual states based on progression */
+    Rectangle boutiqueStore = (Rectangle){
         (float)(centerX - MALL_BTN_WIDTH / 2),
         (float)(startY + spacing),
         (float)MALL_BTN_WIDTH,
         (float)MALL_BTN_HEIGHT
     };
     
-    /* Janitor's Closet - always accessible */
-    DrawRectangleRec(janitorBtn, (Color){70, 100, 80, 255});
-    DrawRectangleLinesEx(janitorBtn, 2.0f, YELLOW);
-    DrawText("Janitor's Closet", 
-             centerX - MeasureText("Janitor's Closet", 16) / 2, 
-             startY + 18, 16, WHITE);
+    Color storeColor, borderColor;
+    const char *storeLabel;
     
-    /* Boutique - based on progression */
-    Color boutiqueColor;
-    const char *boutiqueText;
     if (state->boutiqueRestored) {
-        boutiqueColor = (Color){50, 180, 80, 255};  /* Green when restored */
-        boutiqueText = "Boutique - Restored!";
+        /* Fully Restored - vibrant with Grand Opening decorations */
+        storeColor = (Color){50, 180, 80, 255};
+        borderColor = (Color){80, 255, 120, 255};
+        storeLabel = "Boutique - Restored!";
     } else if (state->boutiqueUnlocked) {
-        boutiqueColor = (Color){100, 120, 200, 255};  /* Blue when unlocked */
-        boutiqueText = "Enter Boutique";
+        /* Unlocked - can enter but not fully restored */
+        storeColor = (Color){100, 120, 200, 255};
+        borderColor = (Color){150, 180, 255, 255};
+        storeLabel = "Enter Boutique";
     } else {
-        boutiqueColor = (Color){80, 80, 80, 200};  /* Gray when locked */
-        boutiqueText = "Boutique - Locked";
+        /* Locked - dark with lock icon */
+        storeColor = (Color){50, 50, 60, 200};
+        borderColor = (Color){80, 80, 100, 200};
+        storeLabel = "Locked";
     }
-    DrawRectangleRec(boutiqueBtn, boutiqueColor);
-    DrawRectangleLinesEx(boutiqueBtn, 2.0f, DARKGRAY);
-    DrawText(boutiqueText, 
-             centerX - MeasureText(boutiqueText, 14) / 2, 
-             startY + spacing + 18, 14, WHITE);
+    
+    /* Draw storefront panel */
+    DrawRectangleRec(boutiqueStore, storeColor);
+    DrawRectangleLinesEx(boutiqueStore, 3.0f, borderColor);
+    
+    /* Draw door handle if unlocked/restored */
+    if (state->boutiqueUnlocked) {
+        DrawCircle(boutiqueStore.x + boutiqueStore.width - 25, boutiqueStore.y + boutiqueStore.height / 2, 6, (Color){180, 200, 220, 255});
+    }
+    
+    /* Draw store label */
+    int labelWidth = MeasureText(storeLabel, 14);
+    DrawText(storeLabel, centerX - labelWidth / 2, startY + spacing + 20, 14, WHITE);
+    
+    /* Draw lock icon if boutique is locked */
+    if (!state->boutiqueUnlocked) {
+        DrawText("🔒", centerX - 8, startY + spacing + 10, 16, (Color){150, 150, 180, 200});
+        const char *lockedHint = "Requires: Skeleton Key";
+        int hintWidth = MeasureText(lockedHint, 10);
+        DrawText(lockedHint, centerX - hintWidth / 2, startY + spacing + 40, 10, GRAY);
+    }
+    
+    /* Draw Grand Opening decorations if boutique is fully upgraded */
+    if (state->boutiqueUpgraded) {
+        /* Bunting/banner across top */
+        DrawRectangle(boutiqueStore.x, boutiqueStore.y - 15, boutiqueStore.width, 10, (Color){255, 215, 0, 255});
+        DrawText("★", boutiqueStore.x + 20, boutiqueStore.y - 18, 12, YELLOW);
+        DrawText("★", boutiqueStore.x + 50, boutiqueStore.y - 18, 12, YELLOW);
+        DrawText("★", boutiqueStore.x + 80, boutiqueStore.y - 18, 12, YELLOW);
+        DrawText("★", boutiqueStore.x + 110, boutiqueStore.y - 18, 12, YELLOW);
+        /* Sign */
+        DrawText("GRAND OPENING!", centerX - 45, startY + spacing - 30, 12, (Color){255, 215, 0, 255});
+    }
+    
+    /* Draw upgrade button inside boutique area (only when unlocked but not upgraded) */
+    if (state->boutiqueUnlocked && !state->boutiqueUpgraded) {
+        Rectangle upgradeBtn = (Rectangle){
+            (float)(centerX + MALL_BTN_WIDTH / 2 - UPGRADE_BTN_WIDTH - 10),
+            (float)(startY + spacing + MALL_BTN_HEIGHT + 10),
+            (float)UPGRADE_BTN_WIDTH,
+            (float)UPGRADE_BTN_HEIGHT
+        };
+        
+        Color upgradeColor = state->coins >= BOUTIQUE_UPGRADE_COST ? (Color){100, 180, 100, 255} : (Color){80, 80, 80, 200};
+        DrawRectangleRec(upgradeBtn, upgradeColor);
+        DrawRectangleLinesEx(upgradeBtn, 2.0f, state->coins >= BOUTIQUE_UPGRADE_COST ? YELLOW : DARKGRAY);
+        
+        const char *upgradeText = "Upgrade (50)";
+        int upgradeTextWidth = MeasureText(upgradeText, 10);
+        DrawText(upgradeText, 
+                 (int)(upgradeBtn.x + (UPGRADE_BTN_WIDTH - upgradeTextWidth) / 2),
+                 (int)(upgradeBtn.y + 7), 10, WHITE);
+    }
     
     /* Title - properly centered below UI bar */
     DrawText("MALL VIEW", centerX - MeasureText("MALL VIEW", 24) / 2, 65, 24, YELLOW);
@@ -381,7 +451,7 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
 int CheckMallShopClick(GameState *state, Vector2 mousePos, int screenWidth) {
     int centerX = screenWidth / 2;
     int startY = 120;
-    int spacing = 80;
+    int spacing = 120;
     
     /* Boutique button */
     Rectangle boutiqueBtn = (Rectangle){
@@ -414,6 +484,51 @@ int CheckMallShopClick(GameState *state, Vector2 mousePos, int screenWidth) {
     }
     
     return 0;  /* No shop clicked */
+}
+
+/* Check if the boutique upgrade button was clicked */
+int CheckMallUpgradeClick(GameState *state, Vector2 mousePos, int screenWidth) {
+    /* Only show upgrade button when unlocked but not upgraded */
+    if (!state->boutiqueUnlocked || state->boutiqueUpgraded) {
+        return 0;
+    }
+    
+    int centerX = screenWidth / 2;
+    int startY = 120;
+    int spacing = 120;
+    
+    Rectangle upgradeBtn = (Rectangle){
+        (float)(centerX + MALL_BTN_WIDTH / 2 - UPGRADE_BTN_WIDTH - 10),
+        (float)(startY + spacing + MALL_BTN_HEIGHT + 10),
+        (float)UPGRADE_BTN_WIDTH,
+        (float)UPGRADE_BTN_HEIGHT
+    };
+    
+    if (mousePos.x >= upgradeBtn.x && mousePos.x <= upgradeBtn.x + UPGRADE_BTN_WIDTH &&
+        mousePos.y >= upgradeBtn.y && mousePos.y <= upgradeBtn.y + UPGRADE_BTN_HEIGHT) {
+        /* Check if player has enough coins */
+        if (state->coins >= BOUTIQUE_UPGRADE_COST) {
+            return 1;  /* Can purchase */
+        }
+    }
+    return 0;
+}
+
+/* Purchase boutique upgrade (costs 50 coins) */
+int PurchaseBoutiqueUpgrade(GameState *state) {
+    if (state->boutiqueUpgraded || !state->boutiqueUnlocked) {
+        return 0;  /* Already upgraded or not unlocked */
+    }
+    
+    if (state->coins < BOUTIQUE_UPGRADE_COST) {
+        return 0;  /* Not enough coins */
+    }
+    
+    /* Deduct coins and mark as upgraded */
+    state->coins -= BOUTIQUE_UPGRADE_COST;
+    state->boutiqueUpgraded = 1;
+    
+    return 1;
 }
 
 /* Draw the toggle button at the bottom of the screen */
