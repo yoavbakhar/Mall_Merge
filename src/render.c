@@ -17,6 +17,15 @@
 #define TOGGLE_BTN_WIDTH 160
 #define TOGGLE_BTN_HEIGHT 30
 
+/* Helper to draw text with custom font (fallback to default if font not loaded) */
+static void DrawTextFont(Font font, const char *text, int posX, int posY, int fontSize, Color color) {
+    if (font.texture.id > 0) {
+        DrawTextEx(font, text, (Vector2){(float)posX, (float)posY}, (float)fontSize, 2.0f, color);
+    } else {
+        DrawText(text, posX, posY, fontSize, color);
+    }
+}
+
 /* Check if the required item is present on the grid */
 int IsRequiredItemOnGrid(Task *task, GameState *state) {
     if (!task) {
@@ -86,7 +95,7 @@ void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int scre
     
     const char *title = "TASK";
     int titleWidth = MeasureText(title, 16);
-    DrawText(title, panelX + (TASK_PANEL_WIDTH - titleWidth) / 2, panelY + 10, 16, YELLOW);
+    DrawTextFont(state->customFont, title, panelX + (TASK_PANEL_WIDTH - titleWidth) / 2, panelY + 10, 16, YELLOW);
     
     DrawLine(panelX + 10, panelY + 30, panelX + TASK_PANEL_WIDTH - 10, panelY + 30, (Color){100, 100, 120, 255});
     
@@ -122,15 +131,15 @@ void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int scre
         
         int checkX = requiredX + itemSlotSize - 12;
         int checkY = requiredY + 12;
-        DrawText("✓", checkX, checkY, 18, GREEN);
+        DrawTextFont(state->customFont, "✓", checkX, checkY, 18, GREEN);
     }
     
     const char *requiredLabel = requiredDef ? requiredDef->name : "Unknown";
     int labelWidth = MeasureText(requiredLabel, 10);
-    DrawText(requiredLabel, centerX - labelWidth / 2, requiredY + itemSlotSize + 4, 10, LIGHTGRAY);
+    DrawTextFont(state->customFont, requiredLabel, centerX - labelWidth / 2, requiredY + itemSlotSize + 4, 10, LIGHTGRAY);
     
     int arrowY = itemY + itemSlotSize + 25;
-    DrawText("↓", centerX - 5, arrowY, 18, hasRequiredItem ? GREEN : GRAY);
+    DrawTextFont(state->customFont, "↓", centerX - 5, arrowY, 18, hasRequiredItem ? GREEN : GRAY);
     
     ItemID rewardID = activeTask->reward_item_id;
     const ItemDefinition *rewardDef = GetItemDefinition(rewardID);
@@ -153,18 +162,18 @@ void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int scre
     }
     
     if (rewardDef && rewardDef->is_generator) {
-        DrawText("⚡", rewardX + itemSlotSize - 14, rewardY + 4, 12, YELLOW);
+        DrawTextFont(state->customFont, "⚡", rewardX + itemSlotSize - 14, rewardY + 4, 12, YELLOW);
     }
     
     const char *rewardLabel = rewardDef ? rewardDef->name : "Unknown";
     labelWidth = MeasureText(rewardLabel, 10);
-    DrawText(rewardLabel, centerX - labelWidth / 2, rewardY + itemSlotSize + 4, 10, LIGHTGRAY);
+    DrawTextFont(state->customFont, rewardLabel, centerX - labelWidth / 2, rewardY + itemSlotSize + 4, 10, LIGHTGRAY);
     
     int statusY = rewardY + itemSlotSize + 25;
     if (hasRequiredItem) {
-        DrawText("READY!", centerX - 25, statusY, 14, GREEN);
+        DrawTextFont(state->customFont, "READY!", centerX - 25, statusY, 14, GREEN);
     } else {
-        DrawText("Find the", centerX - 28, statusY, 12, GRAY);
+        DrawTextFont(state->customFont, "Find the", centerX - 28, statusY, 12, GRAY);
     }
     
     int completeBtnY = screenHeight - 160;
@@ -186,7 +195,7 @@ void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int scre
     
     const char *btnText = hasRequiredItem ? "COMPLETE!" : "Not Ready";
     int btnTextWidth = MeasureText(btnText, 12);
-    DrawText(btnText, panelX + (TASK_PANEL_WIDTH - 20 - btnTextWidth) / 2, completeBtnY + 8, 12, WHITE);
+    DrawTextFont(state->customFont, btnText, panelX + (TASK_PANEL_WIDTH - 20 - btnTextWidth) / 2, completeBtnY + 8, 12, WHITE);
 }
 
 /* Trash button dimensions */
@@ -275,7 +284,7 @@ void DrawTrashButton(GameState *state, int screenWidth, int screenHeight) {
     
     const char *trashIcon = "🗑";
     int iconWidth = MeasureText(trashIcon, 18);
-    DrawText(trashIcon, 
+    DrawTextFont(state->customFont, trashIcon,
              (int)(trashBtnRect.x + (TRASH_BTN_WIDTH - iconWidth) / 2),
              (int)(trashBtnRect.y + 8), 18, WHITE);
 }
@@ -300,9 +309,9 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
     }
     
     DrawRectangle(0, 0, screenWidth, 50, (Color){30, 30, 40, 255});
-    DrawText(TextFormat("Energy: %d/%d", state->energy, state->max_energy),
+    DrawTextFont(state->customFont, TextFormat("Energy: %d/%d", state->energy, state->max_energy),
              20, 15, 16, YELLOW);
-    DrawText(TextFormat("Coins: %d", state->coins),
+    DrawTextFont(state->customFont, TextFormat("Coins: %d", state->coins),
              screenWidth - 120, 15, 16, (Color){144, 238, 144, 255});
     
     int centerX = screenWidth / 2;
@@ -322,7 +331,7 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
     
     const char *janitorLabel = "Janitor's Closet";
     int janLabelWidth = MeasureText(janitorLabel, 14);
-    DrawText(janitorLabel, centerX - janLabelWidth / 2, startY + 20, 14, WHITE);
+    DrawTextFont(state->customFont, janitorLabel, centerX - janLabelWidth / 2, startY + 20, 14, WHITE);
     
     Rectangle boutiqueStore = (Rectangle){
         (float)(centerX - MALL_BTN_WIDTH / 2),
@@ -356,22 +365,22 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
     }
     
     int labelWidth = MeasureText(storeLabel, 14);
-    DrawText(storeLabel, centerX - labelWidth / 2, startY + spacing + 20, 14, WHITE);
+    DrawTextFont(state->customFont, storeLabel, centerX - labelWidth / 2, startY + spacing + 20, 14, WHITE);
     
     if (!state->boutiqueUnlocked) {
-        DrawText("🔒", centerX - 8, startY + spacing + 10, 16, (Color){150, 150, 180, 200});
+        DrawTextFont(state->customFont, "🔒", centerX - 8, startY + spacing + 10, 16, (Color){150, 150, 180, 200});
         const char *lockedHint = "Requires: Skeleton Key";
         int hintWidth = MeasureText(lockedHint, 10);
-        DrawText(lockedHint, centerX - hintWidth / 2, startY + spacing + 40, 10, GRAY);
+        DrawTextFont(state->customFont, lockedHint, centerX - hintWidth / 2, startY + spacing + 40, 10, GRAY);
     }
     
     if (state->boutiqueUpgraded) {
         DrawRectangle(boutiqueStore.x, boutiqueStore.y - 15, boutiqueStore.width, 10, (Color){255, 215, 0, 255});
-        DrawText("★", boutiqueStore.x + 20, boutiqueStore.y - 18, 12, YELLOW);
-        DrawText("★", boutiqueStore.x + 50, boutiqueStore.y - 18, 12, YELLOW);
-        DrawText("★", boutiqueStore.x + 80, boutiqueStore.y - 18, 12, YELLOW);
-        DrawText("★", boutiqueStore.x + 110, boutiqueStore.y - 18, 12, YELLOW);
-        DrawText("GRAND OPENING!", centerX - 45, startY + spacing - 30, 12, (Color){255, 215, 0, 255});
+        DrawTextFont(state->customFont, "★", boutiqueStore.x + 20, boutiqueStore.y - 18, 12, YELLOW);
+        DrawTextFont(state->customFont, "★", boutiqueStore.x + 50, boutiqueStore.y - 18, 12, YELLOW);
+        DrawTextFont(state->customFont, "★", boutiqueStore.x + 80, boutiqueStore.y - 18, 12, YELLOW);
+        DrawTextFont(state->customFont, "★", boutiqueStore.x + 110, boutiqueStore.y - 18, 12, YELLOW);
+        DrawTextFont(state->customFont, "GRAND OPENING!", centerX - 45, startY + spacing - 30, 12, (Color){255, 215, 0, 255});
     }
     
     if (state->boutiqueUnlocked && !state->boutiqueUpgraded) {
@@ -388,7 +397,7 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
         
         const char *upgradeText = "Upgrade (50)";
         int upgradeTextWidth = MeasureText(upgradeText, 10);
-        DrawText(upgradeText, 
+        DrawTextFont(state->customFont, upgradeText, 
                  (int)(upgradeBtn.x + (UPGRADE_BTN_WIDTH - upgradeTextWidth) / 2),
                  (int)(upgradeBtn.y + 7), 10, WHITE);
     }
@@ -422,25 +431,25 @@ void DrawMallScreen(GameState *state, int screenWidth, int screenHeight) {
     }
     
     labelWidth = MeasureText(storeLabel, 14);
-    DrawText(storeLabel, centerX - labelWidth / 2, startY + spacing * 2 + 20, 14, WHITE);
+    DrawTextFont(state->customFont, storeLabel, centerX - labelWidth / 2, startY + spacing * 2 + 20, 14, WHITE);
     
     if (!state->arcadeUnlocked) {
-        DrawText("🔒", centerX - 8, startY + spacing * 2 + 10, 16, (Color){150, 150, 180, 200});
+        DrawTextFont(state->customFont, "🔒", centerX - 8, startY + spacing * 2 + 10, 16, (Color){150, 150, 180, 200});
         const char *arcadeLockedHint = "Complete Boutique Tasks";
         int arcadeHintWidth = MeasureText(arcadeLockedHint, 10);
-        DrawText(arcadeLockedHint, centerX - arcadeHintWidth / 2, startY + spacing * 2 + 40, 10, GRAY);
+        DrawTextFont(state->customFont, arcadeLockedHint, centerX - arcadeHintWidth / 2, startY + spacing * 2 + 40, 10, GRAY);
     }
     
     if (state->arcadeRestored) {
         DrawRectangle(arcadeStore.x, arcadeStore.y - 15, arcadeStore.width, 10, (Color){0, 255, 255, 200});
-        DrawText("★", arcadeStore.x + 20, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
-        DrawText("★", arcadeStore.x + 50, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
-        DrawText("★", arcadeStore.x + 80, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
-        DrawText("★", arcadeStore.x + 110, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
-        DrawText("HIGH SCORE!", centerX - 40, startY + spacing * 2 - 30, 12, (Color){0, 255, 255, 255});
+        DrawTextFont(state->customFont, "★", arcadeStore.x + 20, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
+        DrawTextFont(state->customFont, "★", arcadeStore.x + 50, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
+        DrawTextFont(state->customFont, "★", arcadeStore.x + 80, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
+        DrawTextFont(state->customFont, "★", arcadeStore.x + 110, arcadeStore.y - 18, 12, (Color){255, 100, 255, 255});
+        DrawTextFont(state->customFont, "HIGH SCORE!", centerX - 40, startY + spacing * 2 - 30, 12, (Color){0, 255, 255, 255});
     }
     
-    DrawText("MALL VIEW", centerX - MeasureText("MALL VIEW", 24) / 2, 65, 24, YELLOW);
+    DrawTextFont(state->customFont, "MALL VIEW", centerX - MeasureText("MALL VIEW", 24) / 2, 65, 24, YELLOW);
 }
 
 /* Check if a shop button was clicked in Mall view */
@@ -537,7 +546,7 @@ int PurchaseBoutiqueUpgrade(GameState *state) {
 }
 
 /* Draw the toggle button at the bottom of the screen */
-void DrawToggleButton(int screenWidth, int screenHeight, int isVisible) {
+void DrawToggleButton(Font font, int screenWidth, int screenHeight, int isVisible) {
     int btnX = (screenWidth - TOGGLE_BTN_WIDTH) / 2;
     int btnY = screenHeight - 40;
     
@@ -554,7 +563,7 @@ void DrawToggleButton(int screenWidth, int screenHeight, int isVisible) {
     
     const char *btnText = isVisible ? "Hide Task Panel" : "Show Task Panel";
     int btnTextWidth = MeasureText(btnText, 12);
-    DrawText(btnText, btnX + (TOGGLE_BTN_WIDTH - btnTextWidth) / 2, btnY + 8, 12, WHITE);
+    DrawTextFont(font, btnText, btnX + (TOGGLE_BTN_WIDTH - btnTextWidth) / 2, btnY + 8, 12, WHITE);
 }
 
 float GetSlotSize(int screenWidth) {
@@ -580,9 +589,9 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
         ClearBackground((Color){40, 40, 50, 255});
         
         DrawRectangle(0, 0, screenWidth, 50, (Color){30, 30, 40, 255});
-        DrawText(TextFormat("Energy: %d/%d", state->energy, state->max_energy),
+        DrawTextFont(state->customFont, TextFormat("Energy: %d/%d", state->energy, state->max_energy),
                  20, 15, 16, YELLOW);
-        DrawText(TextFormat("Coins: %d", state->coins),
+        DrawTextFont(state->customFont, TextFormat("Coins: %d", state->coins),
                  screenWidth - 120, 15, 16, (Color){144, 238, 144, 255});
         
         for (int r = 0; r < GRID_ROWS; r++) {
@@ -626,14 +635,14 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
                     
                     int level = def ? def->level : 0;
                     if (level > 0) {
-                        DrawText(TextFormat("L%d", level),
+                        DrawTextFont(state->customFont, TextFormat("L%d", level),
                                  (int)(slot->bounds.x + 5),
                                  (int)(slot->bounds.y + 5),
                                  14, WHITE);
                     }
                     
                     if (def && def->is_generator) {
-                        DrawText("⚡",
+                        DrawTextFont(state->customFont, "⚡",
                                  (int)(slot->bounds.x + slot->bounds.width - 20),
                                  (int)(slot->bounds.y + 5),
                                  16, YELLOW);
@@ -672,23 +681,23 @@ void RenderGame(GameState *state, Vector2 gridTopLeft, float slotSize,
         
         Task *activeTask = GetActiveTask(state);
         if (activeTask) {
-            DrawToggleButton(screenWidth, screenHeight, state->task_panel_visible);
+            DrawToggleButton(state->customFont, screenWidth, screenHeight, state->task_panel_visible);
         }
         
         if (!activeTask) {
             const char *completedText = "All Tasks Complete!";
             int textWidth = MeasureText(completedText, 16);
-            DrawText(completedText, (screenWidth - textWidth) / 2, screenHeight - 110, 16, GREEN);
+            DrawTextFont(state->customFont, completedText, (screenWidth - textWidth) / 2, screenHeight - 110, 16, GREEN);
         }
         
-        DrawText("Tap generator (⚡) or drag to merge!", 20, screenHeight - 80, 12, LIGHTGRAY);
+        DrawTextFont(state->customFont, "Tap generator (⚡) or drag to merge!", 20, screenHeight - 80, 12, LIGHTGRAY);
         
         int backBtnX = screenWidth - 150;
         int backBtnY = 10;
         Rectangle backBtnRect = (Rectangle){(float)backBtnX, (float)backBtnY, 120, 30};
         DrawRectangleRec(backBtnRect, (Color){100, 100, 150, 255});
         DrawRectangleLinesEx(backBtnRect, 2.0f, YELLOW);
-        DrawText("Back to Mall", backBtnX + 15, backBtnY + 8, 12, WHITE);
+        DrawTextFont(state->customFont, "Back to Mall", backBtnX + 15, backBtnY + 8, 12, WHITE);
         
         DrawParticles();
     }

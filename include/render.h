@@ -21,10 +21,10 @@ void RenderCleanup(GameState *state);
 void DrawTaskPanel(GameState *state, Vector2 mousePos, int screenWidth, int screenHeight);
 
 /* Draw the toggle button at the bottom of the screen */
-void DrawToggleButton(int screenWidth, int screenHeight, int isVisible);
+void DrawToggleButton(Font font, int screenWidth, int screenHeight, int isVisible);
 
 /* Check if the required item is present on the grid */
-int IsRequiredItemOnGrid(GameState *state);
+int IsRequiredItemOnGrid(Task *task, GameState *state);
 
 /* Check if the complete task button was clicked (inside task panel) */
 int CheckTaskButtonClick(GameState *state, Vector2 mousePos, int screenWidth, int screenHeight);

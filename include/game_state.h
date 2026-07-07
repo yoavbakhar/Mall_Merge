@@ -87,6 +87,9 @@ typedef struct {
     int boutiqueUpgraded;
     int arcadeUnlocked;
     int arcadeRestored;
+    
+    /* Custom font for UI */
+    Font customFont;
 } GameState;
 
 /* Initialize game state */
@@ -95,7 +98,7 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight);
 /* Get texture for an item (load on demand) */
 Texture2D *GetItemTexture(GameState *state, ItemID item_id);
 
-/* Cleanup all loaded textures */
+/* Cleanup all loaded textures and font */
 void GameStateCleanup(GameState *state);
 
 /* Save game state to binary file */

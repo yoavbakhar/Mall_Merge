@@ -63,6 +63,15 @@ void GameStateInit(GameState *state, int screenWidth, int screenHeight) {
     state->boutiqueUpgraded = 0;
     state->arcadeUnlocked = 0;
     state->arcadeRestored = 0;
+    
+    /* Load custom font with star symbol support */
+    int codepoints[100];
+    int count = 0;
+    for (int i = 32; i <= 126 && count < 99; i++) {
+        codepoints[count++] = i;
+    }
+    codepoints[count++] = 0x2605;  /* Star symbol ★ */
+    state->customFont = LoadFontEx("assets/fonts/Roboto-Regular.ttf", 32, codepoints, count);
 }
 
 Texture2D *GetItemTexture(GameState *state, ItemID item_id) {
@@ -98,6 +107,10 @@ void GameStateCleanup(GameState *state) {
         if (state->texture_cache[i].texture.id > 0) {
             UnloadTexture(state->texture_cache[i].texture);
         }
+    }
+    
+    if (state->customFont.texture.id > 0) {
+        UnloadFont(state->customFont);
     }
 }
 
